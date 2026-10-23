@@ -19,6 +19,7 @@ enum {
 
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim4;
+extern void ClockNeedle_ISR(void); // main.c
 
 button_t btnMode;
 
@@ -31,6 +32,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	} else if (htim->Instance == TIM4) {
 		TimeClock_ISR();
 		StopWatch_ISR();
+	} else if (htim->Instance == TIM9) {
+		ClockNeedle_ISR();
 	}
 }
 

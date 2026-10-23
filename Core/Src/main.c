@@ -22,7 +22,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "driver/stepmotor/stepmotor.h"
-#include "driver/button/button.h"
 
 /* USER CODE END Includes */
 
@@ -33,6 +32,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+// TIM9 : 100MHz / 100 = 1MHz(1us), ARR 14648-1 -> 14.648ms 마다 인터럽트 (60s / 4096 step)
+#define MIN_STEP_TICK	60	// 분침 한 칸 = 14.648ms x 60 = 878.88ms
 
 /* USER CODE END PD */
 
@@ -69,19 +70,16 @@ static void MX_TIM9_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-static button_t btn_up;
-static button_t btn_down;
-
 stepMotor_pin_t stepMotorSecPins[4] = { { GPIOA, GPIO_PIN_0 }, // orange
 		{ GPIOA, GPIO_PIN_1 }, // yellow
 		{ GPIOA, GPIO_PIN_4 }, // pink
 		{ GPIOB, GPIO_PIN_0 }  // blue
 };
 
-stepMotor_pin_t stepMotorMinPins[4] = { { GPIOA, GPIO_PIN_0 }, // orange
-		{ GPIOA, GPIO_PIN_1 }, // yellow
-		{ GPIOA, GPIO_PIN_4 }, // pink
-		{ GPIOB, GPIO_PIN_0 }  // blue
+stepMotor_pin_t stepMotorMinPins[4] = { { GPIOC, GPIO_PIN_10 }, // orange
+		{ GPIOC, GPIO_PIN_11 }, // yellow
+		{ GPIOC, GPIO_PIN_12 }, // pink
+		{ GPIOD, GPIO_PIN_2 }  // blue
 };
 
 stepMotor_pin_t stepMotorHourPins[4] = { { GPIOA, GPIO_PIN_0 }, // orange
@@ -104,7 +102,14 @@ void ClockNeedle_clearFlag(void) {
 
 }
 
+// TIM9 인터럽트(14.648ms) 마다 호출, ap_main.c 의 HAL_TIM_PeriodElapsedCallback 에서 호출
 void ClockNeedle_ISR(void) {
+	static uint16_t minTickCnt = 0;
+
+	if (++minTickCnt < MIN_STEP_TICK) {
+		return;
+	}
+	minTickCnt = 0;
 	ClockNeedle_setFlag();
 }
 
@@ -113,16 +118,7 @@ void ClockNeedle_task(void) {
 		return;
 	}
 	ClockNeedle_clearFlag();
-	StepMotor_stepPhase(&stepMotors[SEC], STEPMOTOR_DIR_CW);
-}
-
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-	/* Prevent unused argument(s) compilation warning */
-	if (htim->Instance == TIM9) {
-		ClockNeedle_ISR();
-	} else {
-
-	}
+	StepMotor_stepPhase(&stepMotors[MIN], STEPMOTOR_DIR_CW);
 }
 
 /* USER CODE END 0 */
@@ -163,8 +159,6 @@ int main(void)
   MX_TIM9_Init();
   /* USER CODE BEGIN 2 */
 	HAL_TIM_Base_Start_IT(&htim9); // tim9 시작
-	button_init(&btn_up, GPIOC, GPIO_PIN_1);
-	button_init(&btn_down, GPIOC, GPIO_PIN_3);
 
   /* USER CODE END 2 */
 
@@ -172,11 +166,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 	while (1) {
 		ClockNeedle_task();
-		if (button_getState(&btn_up) == ACT_RELEASE) {
-			__HAL_TIM_SET_AUTORELOAD(&htim9, 1000 - 1);
-		} else if (button_getState(&btn_down) == ACT_RELEASE) {
-			__HAL_TIM_SET_AUTORELOAD(&htim9, 2000 - 1);
-		}
 	}
     /* USER CODE END WHILE */
 
@@ -373,7 +362,7 @@ static void MX_TIM9_Init(void)
   htim9.Instance = TIM9;
   htim9.Init.Prescaler = 100-1;
   htim9.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim9.Init.Period = 65535;
+  htim9.Init.Period = 14648-1;
   htim9.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim9.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim9) != HAL_OK)
