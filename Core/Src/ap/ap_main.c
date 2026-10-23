@@ -9,6 +9,7 @@
 #include "StopWatch/StopWatch.h"
 #include "TimeClock/TimeClock.h"
 #include "Display/Display.h"
+#include "AnalogClock/AnalogClock.h"
 #include "../driver/fnd/fnd.h"
 #include "../driver/button/button.h"
 #include "../driver/led/led.h"
@@ -19,20 +20,23 @@ enum {
 
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim4;
+extern TIM_HandleTypeDef htim9;
 
 button_t btnMode;
 
 int modeState = TIME_CLOCK_MODE;
 
-//void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-//	if (htim->Instance == TIM3) {
-//		//fnd_show_number();
-//		Disp_ISR();
-//	} else if (htim->Instance == TIM4) {
-//		TimeClock_ISR();
-//		StopWatch_ISR();
-//	}
-//}
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	if (htim->Instance == TIM3) {
+		//fnd_show_number();
+		Disp_ISR();
+	} else if (htim->Instance == TIM4) {
+		TimeClock_ISR();
+		StopWatch_ISR();
+	} else if (htim->Instance == TIM9) {
+		ClockNeedle_ISR();
+	}
+}
 
 void ap_init(void) {
 	StopWatch_init();
@@ -43,6 +47,7 @@ void ap_init(void) {
 
 	HAL_TIM_Base_Start_IT(&htim3);
 	HAL_TIM_Base_Start_IT(&htim4);
+	HAL_TIM_Base_Start_IT(&htim9);
 }
 
 void ap_timeClockMode(void) {
@@ -83,6 +88,7 @@ int ap_main(void) {
 	while (1) // super loop
 	{
 		TimeClock_task();
+		ClockNeedle_task();
 
 		switch (modeState) {
 		case TIME_CLOCK_MODE:

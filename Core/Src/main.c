@@ -21,9 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "driver/stepmotor/stepmotor.h"
-#include "driver/button/button.h"
-#include "ap/AnalogClock/AnalogClock.h"
+#include "ap/ap_main.h"
 
 /* USER CODE END Includes */
 
@@ -69,17 +67,6 @@ static void MX_TIM9_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-static button_t btn_up;
-static button_t btn_down;
-
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-	/* Prevent unused argument(s) compilation warning */
-	if (htim->Instance == TIM9) {
-		ClockNeedle_ISR();
-	}
-}
-
 /* USER CODE END 0 */
 
 /**
@@ -117,16 +104,13 @@ int main(void)
   MX_I2C1_Init();
   MX_TIM9_Init();
   /* USER CODE BEGIN 2 */
-	HAL_TIM_Base_Start_IT(&htim9); // tim9 시작
-	button_init(&btn_up, GPIOC, GPIO_PIN_1);
-	button_init(&btn_down, GPIOC, GPIO_PIN_3);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	while (1) {
-		ClockNeedle_task();
+		ap_main();
 	}
     /* USER CODE END WHILE */
 
