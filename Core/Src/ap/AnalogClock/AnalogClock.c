@@ -12,16 +12,16 @@ stepMotor_pin_t stepMotorSecPins[4] = { { GPIOA, GPIO_PIN_0 }, // orange
 		{ GPIOB, GPIO_PIN_0 }  // blue
 };
 
-stepMotor_pin_t stepMotorMinPins[4] = { { GPIOA, GPIO_PIN_0 }, // orange
-		{ GPIOA, GPIO_PIN_1 }, // yellow
-		{ GPIOA, GPIO_PIN_4 }, // pink
-		{ GPIOB, GPIO_PIN_0 }  // blue
+stepMotor_pin_t stepMotorMinPins[4] = { { GPIOC, GPIO_PIN_10 }, // orange
+		{ GPIOC, GPIO_PIN_11 }, // yellow
+		{ GPIOC, GPIO_PIN_12 }, // pink
+		{ GPIOD, GPIO_PIN_2 }  // blue
 };
 
-stepMotor_pin_t stepMotorHourPins[4] = { { GPIOA, GPIO_PIN_0 }, // orange
-		{ GPIOA, GPIO_PIN_1 }, // yellow
-		{ GPIOA, GPIO_PIN_4 }, // pink
-		{ GPIOB, GPIO_PIN_0 }  // blue
+stepMotor_pin_t stepMotorHourPins[4] = { { GPIOC, GPIO_PIN_5 }, // orange
+		{ GPIOC, GPIO_PIN_6 }, // yellow
+		{ GPIOC, GPIO_PIN_8 }, // pink
+		{ GPIOC, GPIO_PIN_9 }  // blue
 };
 
 stepMotor_t stepMotors[3] = { { stepMotorSecPins, 0 }, { stepMotorMinPins, 0 },

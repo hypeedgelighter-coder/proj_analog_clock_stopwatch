@@ -62,16 +62,21 @@ void ap_timeClockMode(void) {
 	Disp_setTimeClockDate((timeClockDate_t*) pTimeClockDate);
 
 	Disp_setMode(modeState);
+
+	ClockNeedle_task();
 }
 
 void ap_stopWatchMode(void) {
 	if (button_getState(&btnMode) == ACT_RELEASE) {
 		modeState = TIME_CLOCK_MODE;
 	}
-	StopWatch_task();
+	TimeClock_task();
 
 	stopWatch_state_t stopWatchState = StopWatch_getState();
 	Disp_setStopWatchState(stopWatchState);
+	if (stopWatchState == STOPWATCH_RUN) {
+		ClockNeedle_task();
+	}
 
 	Disp_setMode(modeState);
 
@@ -88,7 +93,6 @@ int ap_main(void) {
 	while (1) // super loop
 	{
 		TimeClock_task();
-		ClockNeedle_task();
 
 		switch (modeState) {
 		case TIME_CLOCK_MODE:
