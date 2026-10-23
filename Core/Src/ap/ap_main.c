@@ -25,6 +25,7 @@ extern TIM_HandleTypeDef htim9;
 button_t btnMode;
 
 int modeState = TIME_CLOCK_MODE;
+stopWatch_state_t stopWatchState;
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim->Instance == TIM3) {
@@ -34,7 +35,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		TimeClock_ISR();
 		StopWatch_ISR();
 	} else if (htim->Instance == TIM9) {
-		ClockNeedle_ISR();
+		if ((stopWatchState == RUN) | (modeState = TIME_CLOCK_MODE)) {
+			ClockNeedle_ISR();
+			ClockNeedle_task();
+		}
 	}
 }
 
@@ -62,8 +66,6 @@ void ap_timeClockMode(void) {
 	Disp_setTimeClockDate((timeClockDate_t*) pTimeClockDate);
 
 	Disp_setMode(modeState);
-
-	ClockNeedle_task();
 }
 
 void ap_stopWatchMode(void) {
@@ -72,11 +74,8 @@ void ap_stopWatchMode(void) {
 	}
 	TimeClock_task();
 
-	stopWatch_state_t stopWatchState = StopWatch_getState();
+	stopWatchState = StopWatch_getState();
 	Disp_setStopWatchState(stopWatchState);
-	if (stopWatchState == RUN) {
-		ClockNeedle_task();
-	}
 
 	Disp_setMode(modeState);
 

@@ -6,6 +6,8 @@
  */
 #include "AnalogClock.h"
 
+#define MAX_STEP	4096
+
 stepMotor_pin_t stepMotorSecPins[4] = { { GPIOA, GPIO_PIN_0 }, // orange
 		{ GPIOA, GPIO_PIN_1 }, // yellow
 		{ GPIOA, GPIO_PIN_4 }, // pink
@@ -24,31 +26,49 @@ stepMotor_pin_t stepMotorHourPins[4] = { { GPIOC, GPIO_PIN_5 }, // orange
 		{ GPIOC, GPIO_PIN_9 }  // blue
 };
 
-stepMotor_t stepMotors[3] = { { stepMotorSecPins, 0 }, { stepMotorMinPins, 0 },
-		{ stepMotorHourPins, 0 } };
+typedef struct {
+	volatile stepMotor_t motor;
+	volatile uint8_t isrFlag;
+	volatile uint16_t curStepCounter;
+} clockNeedle_t;
 
-volatile uint8_t isrFlag = 0;
+clockNeedle_t clockNeedles[3] = { { stepMotorSecPins, 0, 0 }, {
+		stepMotorMinPins, 0, 0 }, { stepMotorHourPins, 0, 0 } };
 
-
-
-void ClockNeedle_setFlag(void) {
-	isrFlag = 1;
-
+void ClockNeedle_setFlag(int idx) {
+	clockNeedles[idx].isrFlag = 1;
 }
 
-void ClockNeedle_clearFlag(void) {
-	isrFlag = 0;
-
+void ClockNeedle_clearFlag(int idx) {
+	clockNeedles[idx].isrFlag = 0;
 }
 
 void ClockNeedle_ISR(void) {
 	ClockNeedle_setFlag();
 }
 
-void ClockNeedle_task(void) {
-	if (!isrFlag) {
-		return;
+void ClockNeedle_addStepCount(int idx) {
+	if (clockNeedles[idx].curStepCounter == MAX_STEP - 1) {
+		clockNeedles[idx].curStepCounter = 0;
+	} else {
+		clockNeedles[idx].curStepCounter++;
 	}
-	ClockNeedle_clearFlag();
-	StepMotor_stepPhase(&stepMotors[SEC], STEPMOTOR_DIR_CW);
+}
+
+void ClockNeedle_task(void) {
+	for (int i = 0; i < 3; i++) {
+		if (!clockNeedles[i].isrFlag) {
+			return;
+		}
+		ClockNeedle_clearFlag(i);
+		StepMotor_stepPhase(&clockNeedles[i].motor, STEPMOTOR_DIR_CW);
+		ClockNeedle_addStepCount(i);
+	}
+}
+
+void ClockNeedle_init(void) {
+	for (int i =0; i<3;i++) {
+		clockNeedles[i].isrFlag = 0;
+		clockNeedles[i].curStepCounter = 0;
+	}
 }
