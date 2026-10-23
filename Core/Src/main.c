@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "driver/stepmotor/stepmotor.h"
 #include "driver/button/button.h"
+#include "ap/AnalogClock/AnalogClock.h"
 
 /* USER CODE END Includes */
 
@@ -72,56 +73,10 @@ static void MX_TIM9_Init(void);
 static button_t btn_up;
 static button_t btn_down;
 
-stepMotor_pin_t stepMotorSecPins[4] = { { GPIOA, GPIO_PIN_0 }, // orange
-		{ GPIOA, GPIO_PIN_1 }, // yellow
-		{ GPIOA, GPIO_PIN_4 }, // pink
-		{ GPIOB, GPIO_PIN_0 }  // blue
-};
-
-stepMotor_pin_t stepMotorMinPins[4] = { { GPIOA, GPIO_PIN_0 }, // orange
-		{ GPIOA, GPIO_PIN_1 }, // yellow
-		{ GPIOA, GPIO_PIN_4 }, // pink
-		{ GPIOB, GPIO_PIN_0 }  // blue
-};
-
-stepMotor_pin_t stepMotorHourPins[4] = { { GPIOA, GPIO_PIN_0 }, // orange
-		{ GPIOA, GPIO_PIN_1 }, // yellow
-		{ GPIOA, GPIO_PIN_4 }, // pink
-		{ GPIOB, GPIO_PIN_0 }  // blue
-};
-
-stepMotor_t stepMotors[3] = { { stepMotorSecPins, 0 }, { stepMotorMinPins, 0 },
-		{ stepMotorHourPins, 0 } };
-
-volatile uint8_t isrFlag = 0;
-void ClockNeedle_setFlag(void) {
-	isrFlag = 1;
-
-}
-
-void ClockNeedle_clearFlag(void) {
-	isrFlag = 0;
-
-}
-
-void ClockNeedle_ISR(void) {
-	ClockNeedle_setFlag();
-}
-
-void ClockNeedle_task(void) {
-	if (!isrFlag) {
-		return;
-	}
-	ClockNeedle_clearFlag();
-	StepMotor_stepPhase(&stepMotors[SEC], STEPMOTOR_DIR_CW);
-}
-
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	/* Prevent unused argument(s) compilation warning */
 	if (htim->Instance == TIM9) {
 		ClockNeedle_ISR();
-	} else {
-
 	}
 }
 
@@ -172,11 +127,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 	while (1) {
 		ClockNeedle_task();
-		if (button_getState(&btn_up) == ACT_RELEASE) {
-			__HAL_TIM_SET_AUTORELOAD(&htim9, 1000 - 1);
-		} else if (button_getState(&btn_down) == ACT_RELEASE) {
-			__HAL_TIM_SET_AUTORELOAD(&htim9, 2000 - 1);
-		}
 	}
     /* USER CODE END WHILE */
 
@@ -373,9 +323,9 @@ static void MX_TIM9_Init(void)
   htim9.Instance = TIM9;
   htim9.Init.Prescaler = 100-1;
   htim9.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim9.Init.Period = 65535;
+  htim9.Init.Period = 14648-1;
   htim9.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim9.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  htim9.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim9) != HAL_OK)
   {
     Error_Handler();
@@ -444,8 +394,9 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8
-                          |GPIO_PIN_9|GPIO_PIN_10, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_4|GPIO_PIN_5
+                          |GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9
+                          |GPIO_PIN_10, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7
@@ -453,8 +404,9 @@ static void MX_GPIO_Init(void)
                           |GPIO_PIN_12, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15
-                          |GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_10|GPIO_PIN_13|GPIO_PIN_14
+                          |GPIO_PIN_15|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5
+                          |GPIO_PIN_6, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, GPIO_PIN_RESET);
@@ -465,10 +417,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA5 PA6 PA7 PA8
-                           PA9 PA10 */
-  GPIO_InitStruct.Pin = GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8
-                          |GPIO_PIN_9|GPIO_PIN_10;
+  /*Configure GPIO pins : PA0 PA1 PA4 PA5
+                           PA6 PA7 PA8 PA9
+                           PA10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_4|GPIO_PIN_5
+                          |GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9
+                          |GPIO_PIN_10;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -485,10 +439,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB10 PB13 PB14 PB15
-                           PB3 PB4 PB5 PB6 */
-  GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15
-                          |GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6;
+  /*Configure GPIO pins : PB0 PB10 PB13 PB14
+                           PB15 PB3 PB4 PB5
+                           PB6 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_10|GPIO_PIN_13|GPIO_PIN_14
+                          |GPIO_PIN_15|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5
+                          |GPIO_PIN_6;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

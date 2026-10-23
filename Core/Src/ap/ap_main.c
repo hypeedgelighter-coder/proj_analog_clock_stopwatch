@@ -24,15 +24,15 @@ button_t btnMode;
 
 int modeState = TIME_CLOCK_MODE;
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-	if (htim->Instance == TIM3) {
-		//fnd_show_number();
-		Disp_ISR();
-	} else if (htim->Instance == TIM4) {
-		TimeClock_ISR();
-		StopWatch_ISR();
-	}
-}
+//void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+//	if (htim->Instance == TIM3) {
+//		//fnd_show_number();
+//		Disp_ISR();
+//	} else if (htim->Instance == TIM4) {
+//		TimeClock_ISR();
+//		StopWatch_ISR();
+//	}
+//}
 
 void ap_init(void) {
 	StopWatch_init();
