@@ -31,11 +31,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim->Instance == TIM3) {
 		//fnd_show_number();
 		Disp_ISR();
+		ClockNeedle_ISR();
 	} else if (htim->Instance == TIM4) {
 		TimeClock_ISR();
 		StopWatch_ISR();
-	} else if (htim->Instance == TIM9) {
-		ClockNeedle_ISR();
 	}
 }
 
