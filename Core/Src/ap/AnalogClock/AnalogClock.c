@@ -27,48 +27,40 @@ stepMotor_pin_t stepMotorHourPins[4] = { { GPIOC, GPIO_PIN_5 }, // orange
 };
 
 typedef struct {
-	volatile stepMotor_t motor;
-	volatile uint8_t isrFlag;
+	stepMotor_t motor;
 	volatile uint16_t curStepCounter;
+	volatile uint16_t targetStepCounter;
 } clockNeedle_t;
 
-clockNeedle_t clockNeedles[3] = { { stepMotorSecPins, 0, 0 }, {
-		stepMotorMinPins, 0, 0 }, { stepMotorHourPins, 0, 0 } };
+clockNeedle_t clockNeedles[3] = { { { stepMotorSecPins, 0 }, 0, 0 }, { {
+		stepMotorMinPins, 0 }, 0, 0 }, { { stepMotorHourPins, 0 }, 0, 0 } };
 
-void ClockNeedle_setFlag(int idx) {
-	clockNeedles[idx].isrFlag = 1;
-}
-
-void ClockNeedle_clearFlag(int idx) {
-	clockNeedles[idx].isrFlag = 0;
-}
-
-void ClockNeedle_ISR(void) {
-	ClockNeedle_setFlag();
-}
 
 void ClockNeedle_addStepCount(int idx) {
-	if (clockNeedles[idx].curStepCounter == MAX_STEP - 1) {
+	if (clockNeedles[idx].curStepCounter >= MAX_STEP - 1) {
 		clockNeedles[idx].curStepCounter = 0;
 	} else {
 		clockNeedles[idx].curStepCounter++;
 	}
 }
 
-void ClockNeedle_task(void) {
-	for (int i = 0; i < 3; i++) {
-		if (!clockNeedles[i].isrFlag) {
-			return;
+void ClockNeedle_ISR(void) {
+	for (int i = 0; i < 3; i++)
+		if (clockNeedles[i].targetStepCounter
+				> clockNeedles[i].curStepCounter) {
+			StepMotor_stepPhase(&clockNeedles[i].motor, STEPMOTOR_DIR_CW);
+			ClockNeedle_addStepCount(i);
 		}
-		ClockNeedle_clearFlag(i);
-		StepMotor_stepPhase(&clockNeedles[i].motor, STEPMOTOR_DIR_CW);
-		ClockNeedle_addStepCount(i);
-	}
+}
+void ClockNeedle_setTime(clockNeedle_time_t *t) {
+	clockNeedles[SEC].targetStepCounter = t->sec * 68.27;
+	clockNeedles[MIN].targetStepCounter = t->min * 68.27;
+	clockNeedles[HOUR].targetStepCounter = (t->hour % 12) * 341.33;
 }
 
 void ClockNeedle_init(void) {
-	for (int i =0; i<3;i++) {
-		clockNeedles[i].isrFlag = 0;
+	for (int i = 0; i < 3; i++) {
+		clockNeedles[i].targetStepCounter = 0;
 		clockNeedles[i].curStepCounter = 0;
 	}
 }

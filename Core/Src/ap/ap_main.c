@@ -35,10 +35,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		TimeClock_ISR();
 		StopWatch_ISR();
 	} else if (htim->Instance == TIM9) {
-		if ((stopWatchState == RUN) | (modeState = TIME_CLOCK_MODE)) {
-			ClockNeedle_ISR();
-			ClockNeedle_task();
-		}
+		ClockNeedle_ISR();
 	}
 }
 
@@ -61,6 +58,7 @@ void ap_timeClockMode(void) {
 
 	TimeClock_t *pTimeClockTime = TimeClock_getTimeData();
 	Disp_setTimeClockTime((timeClockTime_t*) pTimeClockTime, modeState);
+	ClockNeedle_setTime((clockNeedle_time_t *)pTimeClockTime);
 
 	TimeDate_t *pTimeClockDate = TimeClock_getDateData();
 	Disp_setTimeClockDate((timeClockDate_t*) pTimeClockDate);
@@ -84,6 +82,7 @@ void ap_stopWatchMode(void) {
 
 	stopWatch_t *pStopWatchTime = StopWatch_getTimeData();
 	Disp_setStopWatchTime((stopWatchTime_t*) pStopWatchTime);
+	ClockNeedle_setTime((clockNeedle_time_t *)pStopWatchTime);
 }
 
 int ap_main(void) {
