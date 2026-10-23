@@ -29,6 +29,8 @@ stepMotor_t stepMotors[3] = { { stepMotorSecPins, 0 }, { stepMotorMinPins, 0 },
 
 volatile uint8_t isrFlag = 0;
 
+
+
 void ClockNeedle_setFlag(void) {
 	isrFlag = 1;
 

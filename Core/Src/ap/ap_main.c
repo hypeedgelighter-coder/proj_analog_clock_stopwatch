@@ -74,7 +74,7 @@ void ap_stopWatchMode(void) {
 
 	stopWatch_state_t stopWatchState = StopWatch_getState();
 	Disp_setStopWatchState(stopWatchState);
-	if (stopWatchState == STOPWATCH_RUN) {
+	if (stopWatchState == RUN) {
 		ClockNeedle_task();
 	}
 
