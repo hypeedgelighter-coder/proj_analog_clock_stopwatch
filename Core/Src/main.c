@@ -118,6 +118,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	/* Prevent unused argument(s) compilation warning */
 	if (htim->Instance == TIM9) {
 		ClockNeedle_ISR();
+	} else {
+
 	}
 }
 
